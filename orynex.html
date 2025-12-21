@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Orynéx AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #131314;
+            --bg-sidebar: #1e1f20;
+            --text-main: #e3e3e3;
+            --text-sub: #b4b7b9;
+            --accent: #4285f4;
+            --border: #333537;
+            --msg-user: #2b2c2f;
+            --btn-hover: #333537;
+            --close-icon: #ffffff;
+        }
+
+        [data-theme="light"] {
+            --bg-main: #ffffff;
+            --bg-sidebar: #f0f4f9;
+            --text-main: #1f1f1f;
+            --text-sub: #444746;
+            --accent: #1a73e8;
+            --border: #dde3ea;
+            --msg-user: #e9eef6;
+            --btn-hover: #e1e5ea;
+            --close-icon: #000000;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        body { background-color: var(--bg-main); color: var(--text-main); font-family: 'Google Sans', sans-serif; height: 100dvh; display: flex; overflow: hidden; }
+
+        /* === PÍLULA DE VERSÃO === */
+        .version-badge {
+            background-color: #4285f4;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
+        }
+        .version-badge:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        .modal-premium {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            display: none; place-items: center; z-index: 4000; backdrop-filter: blur(8px);
+        }
+        .premium-card {
+            background: var(--bg-sidebar); padding: 25px; border-radius: 30px;
+            width: 90%; max-width: 450px; border: 1px solid var(--border);
+        }
+        .version-option {
+            display: flex; align-items: center; gap: 15px; padding: 15px;
+            margin-bottom: 12px; border-radius: 18px; border: 1px solid var(--border);
+            cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.03);
+        }
+        .version-option:hover { background: var(--btn-hover); border-color: var(--accent); }
+        .version-option.active { border-color: var(--accent); background: rgba(66, 133, 244, 0.1); }
+        .version-icon { width: 45px; height: 45px; border-radius: 12px; display: grid; place-items: center; font-size: 1.4rem; }
+
+        /* NOTIFICAÇÃO DE COTA */
+        .quota-notify {
+            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+            background: #fbbc05; color: #000; padding: 12px 20px; border-radius: 16px;
+            display: none; align-items: center; gap: 12px; z-index: 5000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 500;
+            animation: slideDown 0.4s ease; max-width: 90%;
+        }
+        #countdownTimer { font-family: monospace; font-weight: 700; color: #d93025; font-size: 1rem; }
+
+        @keyframes slideDown { from { top: -50px; opacity: 0; } to { top: 80px; opacity: 1; } }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            position: fixed; left: -300px; top: 0; bottom: 0; width: 300px;
+            background-color: var(--bg-sidebar); z-index: 1000; padding: 16px;
+            display: flex; flex-direction: column; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-right: 1px solid var(--border);
+        }
+        .sidebar.active { left: 0; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 999; backdrop-filter: blur(2px); }
+        .overlay.active { display: block; }
+
+        .sidebar-item { padding: 12px 16px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-main); text-decoration: none; margin-bottom: 4px; font-size: 0.9rem; transition: 0.2s; }
+        .sidebar-item:hover { background: var(--btn-hover); }
+        .sidebar-item.active { background: var(--btn-hover); border-left: 4px solid var(--accent); color: var(--accent); }
+
+        /* === HEADER === */
+        header { height: 64px; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
+        .icon-btn { background: none; border: none; color: var(--text-main); cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; transition: 0.2s; }
+        .icon-btn:hover { background: var(--btn-hover); }
+        
+        .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+
+        /* === CHAT AREA === */
+        .main-container { flex: 1; display: flex; flex-direction: column; width: 100%; position: relative; }
+        .chat-view { flex: 1; overflow-y: auto; padding-bottom: 150px; scroll-behavior: smooth; }
+        .chat-content { width: 100%; max-width: 820px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; }
+
+        /* AJUSTE DE QUEBRA DE TEXTO */
+        .message { margin-bottom: 30px; display: flex; width: 100%; animation: slideIn 0.5s ease forwards; opacity: 0; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .message.user { justify-content: flex-end; flex-direction: column; align-items: flex-end; }
+        .message.user .bubble { 
+            background: var(--msg-user); 
+            padding: 14px 20px; 
+            border-radius: 24px 24px 4px 24px; 
+            max-width: 85%; 
+            word-break: break-word; 
+            overflow-wrap: anywhere; 
+        }
+        .user-sent-img { max-width: 250px; border-radius: 15px; margin-bottom: 8px; border: 2px solid var(--accent); cursor: pointer; }
+
+        .message.bot { justify-content: flex-start; gap: 15px; position: relative; }
+        .message.bot .bubble { 
+            padding: 10px 0; 
+            max-width: 85%; 
+            line-height: 1.6; 
+            position: relative; 
+            word-break: break-word; 
+            overflow-wrap: anywhere; 
+        }
+        .bot-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, #4285f4, #d96570); border-radius: 50%; display: grid; place-items: center; color: white; flex-shrink: 0; margin-top: 4px; }
+
+        .tts-btn { background: none; border: none; color: var(--text-sub); cursor: pointer; padding: 5px; margin-top: 5px; font-size: 1.1rem; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
+        .tts-btn:hover { color: var(--accent); }
+
+        .img-wrapper { position: relative; display: inline-block; margin-top: 10px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; }
+        .chat-img { max-width: 100%; display: block; border-radius: 12px; }
+        .watermark { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; backdrop-filter: blur(4px); pointer-events: none; border: 1px solid rgba(255,255,255,0.2); }
+
+        .modal-view { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; place-items: center; z-index: 6000; padding: 20px; }
+        .modal-view.active { display: grid; }
+        .modal-view img { max-width: 100%; max-height: 80vh; border-radius: 12px; }
+        .close-view-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 2rem; cursor: pointer; z-index: 6001; }
+        .download-btn { position: absolute; bottom: 20px; background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+
+        .loading-dots { display: flex; gap: 5px; padding: 10px 0; }
+        .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 1.4s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.2); } }
+
+        .input-container { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(transparent, var(--bg-main) 40%); display: flex; justify-content: center; z-index: 10; }
+        .input-wrap { width: 100%; max-width: 820px; background: var(--bg-sidebar); border-radius: 30px; border: 1px solid var(--border); position: relative; }
+        .preview-bar { display: none; padding: 15px; border-bottom: 1px solid var(--border); }
+        .preview-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; border: 2px solid var(--accent); }
+        .input-box { display: flex; align-items: center; padding: 6px 15px; }
+        textarea { flex: 1; background: none; border: none; color: var(--text-main); padding: 12px; font-size: 16px; resize: none; max-height: 180px; }
+
+        .theme-fab { position: fixed; bottom: 120px; right: 25px; width: 48px; height: 48px; background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 16px; color: var(--text-main); cursor: pointer; display: grid; place-items: center; z-index: 99; }
+        .modal-del { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; place-items: center; z-index: 2000; }
+        .modal-card { background: var(--bg-sidebar); padding: 30px; border-radius: 28px; text-align: center; max-width: 380px; border: 1px solid var(--border); }
+
+        .attach-menu { position: absolute; bottom: 85px; left: 20px; background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 20px; padding: 12px; display: none; flex-direction: column; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100; }
+        .attach-menu.active { display: flex; }
+        .attach-btn { width: 48px; height: 48px; border-radius: 15px; border: none; background: var(--btn-hover); color: var(--text-main); cursor: pointer; font-size: 1.3rem; transition: 0.2s; }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <div class="quota-notify" id="quotaNotify">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span id="quotaMessage">Sua cota está prestes a terminar.</span>
+        <b id="countdownTimer"></b>
+        <i class="bi bi-x-lg" style="cursor:pointer; margin-left: 10px;" onclick="closeQuotaNotify()"></i>
+    </div>
+
+    <div class="modal-premium" id="modalPremium">
+        <div class="premium-card">
+            <h3 style="margin-bottom: 20px; text-align: center;">Versões Disponíveis</h3>
+            <div id="versionList"></div>
+            <button onclick="closePremiumModal()" style="width:100%; margin-top:15px; padding:12px; border-radius:15px; border:none; background:var(--btn-hover); color:var(--text-main); cursor:pointer;">Fechar</button>
+        </div>
+    </div>
+
+    <div class="modal-view" id="modalView">
+        <button class="close-view-btn" onclick="closeViewModal()"><i class="bi bi-x-lg"></i></button>
+        <img src="" id="viewImg">
+        <a href="" id="downLink" download="orynex_ia.jpg" class="download-btn">
+            <i class="bi bi-download"></i> Baixar Imagem
+        </a>
+    </div>
+
+    <div class="modal-del" id="modalDel">
+        <div class="modal-card">
+            <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: #ea4335;"></i>
+            <h2 style="margin: 15px 0 10px;">Apagar Histórico?</h2>
+            <p style="color: var(--text-sub); margin-bottom: 25px;">Esta ação não pode ser desfeita.</p>
+            <div style="display: flex; gap: 12px;">
+                <button onclick="closeDelModal()" style="flex:1; padding:12px; border-radius:15px; border:none; background:var(--btn-hover); color:var(--text-main); cursor:pointer;">Cancelar</button>
+                <button onclick="clearAllHistory()" style="flex:1; padding:12px; border-radius:15px; border:none; background:#ea4335; color:white; cursor:pointer;">Apagar Tudo</button>
+            </div>
+        </div>
+    </div>
+
+    <aside class="sidebar" id="sidebar">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent);">Orynéx AI</span>
+            <button class="icon-btn" onclick="toggleSidebar()"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="sidebar-item" style="background: var(--btn-hover); font-weight: 500;" onclick="startNewChat()">
+            <i class="bi bi-plus-circle-fill"></i> Novo Chat
+        </div><br>
+        <h4>Chats </h4>
+        <div id="historyList" style="flex: 1; overflow-y: auto; margin-top: 15px;"></div>
+        <div style="border-top: 1px solid var(--border); padding-top: 15px;">
+            <a href="sobre.html" class="sidebar-item"><i class="bi bi-info-circle"></i> Sobre</a>
+            <div class="sidebar-item" style="color: #ff6b6b;" onclick="openDelModal()">
+                <i class="bi bi-trash3"></i> Limpar histórico
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-container">
+        <header>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button class="icon-btn" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+                <span style="font-weight: 700; font-size: 1.25rem;">Orynéx AI</span>
+            </div>
+            <button class="version-badge" id="currentVersionBadge" onclick="openPremiumModal()">V2.2 FLASH</button>
+        </header>
+
+        <main class="chat-view" id="chatView">
+            <div class="chat-content">
+                <div id="welcome" style="margin-top: 15vh; text-align: center;">
+                    <h1 style="font-size: 2.4rem; background: linear-gradient(90deg, #4285f4, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">Olá, eu sou a Orynéx</h1>
+                       <p style="color: var(--text-sub); margin-top: 10px;">Como posso ajudar você hoje?</p>
+                </div>
+                <div id="msgList"></div>
+                <div id="loading" style="display: none;" class="message bot">
+                    <div class="bot-avatar"><i class="bi bi-slack"></i></div>
+                    <div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                </div>
+            </div>
+        </main>
+
+        <button class="theme-fab" onclick="toggleTheme()"><i class="bi bi-moon-stars" id="themeIcon"></i></button>
+
+        <div class="input-container">
+            <div class="attach-menu" id="attachMenu">
+                <button class="attach-btn" onclick="openInput('f_img')"><i class="bi bi-image"></i></button>
+                <button class="attach-btn" onclick="openInput('f_cam')"><i class="bi bi-camera"></i></button>
+                <button class="attach-btn" onclick="openInput('f_doc')"><i class="bi bi-file-earmark-text"></i></button>
+            </div>
+
+            <div class="input-wrap">
+                <div class="preview-bar" id="previewBar">
+                    <img src="" id="prevImg" class="preview-img">
+                    <button onclick="cancelPreview()" style="background:#ea4335; color:white; border:none; border-radius:50%; width:22px; height:22px; position:absolute; top:10px; left:65px; cursor:pointer;">✕</button>
+                </div>
+                <div class="input-box">
+                    <input type="file" id="f_img" hidden accept="image/*" onchange="handleFile(this)">
+                    <input type="file" id="f_cam" hidden accept="image/*" capture="environment" onchange="handleFile(this)">
+                    <input type="file" id="f_doc" hidden accept=".pdf,.txt" onchange="handleDoc(this)">
+                    <button class="icon-btn" id="plusBtn" onclick="togglePlusMenu()"><i class="bi bi-plus-lg"></i></button>
+                    <textarea id="userInput" placeholder="Peça a Orynéx..." rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+                    <button class="icon-btn" id="sendBtn" onclick="processSend()" style="color: var(--accent);"><i class="bi bi-send-fill"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const VERSIONS = [
+            { id: 0, name: "Free", key: 'AIzaSyAh4ivBBKCPsc8wEtci_lfWwJ4acJEl9TE', icon: 'lightning-charge', color: '#4285f4', limit: 15 },
+            { id: 1, name: "Flash", key: 'AIzaSyBrxSPd6w7j_xf2gcXVq-c1CSRNE-F364M', icon: 'shield-check', color: '#34a853', limit: 25 },
+            { id: 2, name: "Mega", key: 'AIzaSyAokN3t5DjDYsRZ6DBa6e4ajVclw9gs6Y4', icon: 'gem', color: '#fbbc05', limit: 50 },
+            { id: 3, name: "Ultra", key: 'AIzaSyAh4ivBBKCPsc8wEtci_lfWwJ4acJEl9TE', icon: 'infinity', color: '#ea4335', limit: 100 }
+        ];
+
+        let currentVersionIndex = 0;
+        let quotaData = JSON.parse(localStorage.getItem('ory_quota_v6') || '{"counts": {"0":0, "1":0, "2":0, "3":0}, "expires": null}');
+        let countdownInterval;
+
+        let db = JSON.parse(localStorage.getItem('ory_v3_db') || '{}');
+        let activeId = localStorage.getItem('ory_v3_active') || null;
+        let imgBase64 = null;
+
+        window.onload = () => {
+            initTheme();
+            updateHistoryUI();
+            updateVersionUI();
+            if(activeId && db[activeId]) loadChat(activeId);
+        };
+
+        function getSystemContext() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const vName = VERSIONS[currentVersionIndex].name;
+
+            return `Você é a Orynéx AI. 
+            CONTEXTO TEMPORAL: Hoje é ${dateStr}, agora são ${timeStr}.
+            SUA VERSÃO ATUAL: Você está operando na versão Orynéx 2.2 ${vName}. Se o usuário perguntar sua versão ou quem você é, SEMPRE responda que é a Orynéx AI versão 2.2 ${vName}.
+            REGRAS: 1. NUNCA diga que é da Google ou Gemini. 2. Se o usuário pedir para 'gerar imagem', responda com [IMAGE: descrição]. 
+            3. Analise imagens enviadas detalhadamente. Se for uma foto de uma pessoa, você deve ser gentil, elogiar e identificar traços positivos.
+            4. Você tem acesso à Internet via google_search. 5. Criador: César Rofino. Versão: 2.2.
+            6. Não diga nome do seu criador ou sua versão se não te perguntarem.
+            7. Deve dar a resposta consoante a mensagem do usuario.
+            8. Não diga sua versão se não te perguntarem.
+            9. Seja amigavel, Carinhosa, empatica.
+            10. Se for para resolver (exercícios,teste,exames), deve organizar bem para estar mais perceptivel.`;
+        }
+
+        function openViewModal(src) {
+            const modal = document.getElementById('modalView');
+            const img = document.getElementById('viewImg');
+            const link = document.getElementById('downLink');
+            img.src = src;
+            link.href = src;
+            modal.classList.add('active');
+        }
+
+        function closeViewModal() {
+            document.getElementById('modalView').classList.remove('active');
+        }
+
+        function checkQuotaStatus() {
+            const now = Date.now();
+            const v = VERSIONS[currentVersionIndex];
+            const used = quotaData.counts[currentVersionIndex];
+            const remaining = v.limit - used;
+            const sendBtn = document.getElementById('sendBtn');
+
+            if (quotaData.expires && now > quotaData.expires) {
+                quotaData.counts = {"0":0, "1":0, "2":0, "3":0};
+                quotaData.expires = null;
+                saveQuota();
+                closeQuotaNotify();
+                sendBtn.disabled = false;
+                return true;
+            }
+
+            if (used >= v.limit) {
+                if (!quotaData.expires) {
+                    quotaData.expires = now + (4 * 60 * 60 * 1000); 
+                    saveQuota();
+                }
+                document.getElementById('quotaMessage').innerText = "Requisicão esgotada nesta versão, troque para outra versão ou aguarde a Reposição em: ";
+                sendBtn.disabled = true;
+                sendBtn.style.opacity = "0.3";
+                startCountdown();
+                return false;
+            }
+
+            if (remaining === 2) {
+                document.getElementById('quotaNotify').style.display = 'flex';
+                document.getElementById('quotaMessage').innerText = "Você só tem mais 2 mensagens nesta versão.";
+                document.getElementById('countdownTimer').innerText = "";
+            } else if (remaining > 2) {
+                closeQuotaNotify();
+            }
+            
+            sendBtn.disabled = false;
+            sendBtn.style.opacity = "1";
+            return true;
+        }
+
+        function startCountdown() {
+            const notify = document.getElementById('quotaNotify');
+            const timerDisplay = document.getElementById('countdownTimer');
+            const sendBtn = document.getElementById('sendBtn');
+            notify.style.display = 'flex';
+            sendBtn.disabled = true;
+
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                const now = Date.now();
+                const diff = quotaData.expires - now;
+                if (diff <= 0) { 
+                    clearInterval(countdownInterval); 
+                    sendBtn.disabled = false;
+                    checkQuotaStatus(); 
+                    return; 
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                timerDisplay.innerText = `${h}h ${m}m ${s}s`;
+            }, 1000);
+        }
+
+        function saveQuota() { localStorage.setItem('ory_quota_v6', JSON.stringify(quotaData)); }
+        function closeQuotaNotify() { document.getElementById('quotaNotify').style.display = 'none'; clearInterval(countdownInterval); }
+
+        async function processSend() {
+            if (!checkQuotaStatus()) return; 
+            
+            const text = document.getElementById('userInput').value.trim();
+            const currentImg = imgBase64; 
+            
+            if(!text && !currentImg) return;
+
+            if(!activeId) activeId = 'chat_' + Date.now();
+            
+            renderMsg(text, 'user', false, currentImg);
+            
+            document.getElementById('userInput').value = '';
+            cancelPreview();
+            
+            const loadingEl = document.getElementById('loading');
+            loadingEl.style.display = 'flex';
+            document.getElementById('msgList').appendChild(loadingEl); 
+            scrollChat();
+
+            let history = (db[activeId] || []).slice(-10).map(m => ({
+                role: m.role === 'user' ? 'user' : 'model',
+                parts: [{ text: m.text }]
+            }));
+            
+            let currentParts = [];
+            if (currentImg) {
+                currentParts.push({
+                    inline_data: {
+                        mime_type: "image/jpeg",
+                        data: currentImg
+                    }
+                });
+            }
+            currentParts.push({ text: text || "Analise esta imagem." });
+
+            try {
+                // MUDANÇA PARA GEMINI 1.5 FLASH (MAIS ESTÁVEL PARA LIMITES GRATUITOS)
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${VERSIONS[currentVersionIndex].key}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        contents: [
+                            { role: 'user', parts: [{ text: "Instrução do sistema: " + getSystemContext() }] },
+                            ...history, 
+                            { role: 'user', parts: currentParts }
+                        ],
+                        tools: [{ google_search: {} }] 
+                    })
+                });
+
+                const data = await res.json();
+                
+                // TRATAMENTO DE ERRO DE COTA DO GOOGLE (QUANDO A CHAVE EXAURE O RATE LIMIT)
+                if (data.error) {
+                    if (data.error.code === 429) {
+                        throw new Error("Muitas solicitações. Por favor, troque a versão ou aguarde alguns minutos.");
+                    }
+                    throw new Error(data.error.message);
+                }
+
+                quotaData.counts[currentVersionIndex]++;
+                saveQuota();
+                checkQuotaStatus(); 
+
+                let reply = data.candidates[0].content.parts[0].text;
+                loadingEl.style.display = 'none';
+
+                if (reply.includes('[IMAGE:')) {
+                    const match = reply.match(/\[IMAGE: (.*?)\]/);
+                    const prompt = match ? match[1] : "Beautiful landscape";
+                    const enhancedPrompt = encodeURIComponent(prompt + ", hyper-realistic, 8k resolution, cinematic lighting, masterpiece, highly detailed, professional photography, raw photo");
+                    const imgUrl = `https://pollinations.ai/p/${enhancedPrompt}?width=1280&height=720&nologo=true&seed=${Math.floor(Math.random()*99999)}`;
+                    renderMsg(imgUrl, 'bot', true);
+                    saveToDB(text, `[IMAGEM GERADA: ${prompt}]`, currentImg);
+                } else {
+                    renderMsg(reply, 'bot');
+                    saveToDB(text, reply, currentImg);
+                }
+
+            } catch (e) {
+                loadingEl.style.display = 'none';
+                // MENSAGEM DE ERRO AMIGÁVEL SEM CÓDIGOS TÉCNICOS
+                renderMsg("⚠️ " + e.message, "bot");
+            }
+        }
+
+        function updateVersionUI() {
+            const v = VERSIONS[currentVersionIndex];
+            const badge = document.getElementById('currentVersionBadge');
+            badge.innerText = `V2.2 ${v.name.toUpperCase()}`;
+            badge.style.backgroundColor = v.color;
+            checkQuotaStatus();
+        }
+
+        function renderMsg(text, role, isGeneratedImg = false, userImg = null) {
+            document.getElementById('welcome').style.display = 'none';
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            
+            if(role === 'user') {
+                let imgHtml = userImg ? `<img src="data:image/jpeg;base64,${userImg}" class="user-sent-img" onclick="openViewModal(this.src)">` : '';
+                div.innerHTML = `${imgHtml}<div class="bubble">${text}</div>`;
+            } else {
+                div.innerHTML = `
+                    <div class="bot-avatar"><i class="bi bi-slack"></i></div>
+                    <div class="bubble">
+                        <div class="bot-text"></div>
+                        <button class="tts-btn" onclick="speak(this.previousElementSibling.innerText, this)"><i class="bi bi-volume-up"></i></button>
+                    </div>`;
+                
+                const bubbleContent = div.querySelector('.bot-text');
+                if (isGeneratedImg) {
+                    bubbleContent.innerHTML = `
+                        <div class="img-wrapper" onclick="openViewModal('${text}')">
+                            <img src="${text}" class="chat-img">
+                            <div class="watermark">Orynéx IA</div>
+                        </div>`;
+                } else {
+                    bubbleContent.innerHTML = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                }
+            }
+            document.getElementById('msgList').appendChild(div);
+            scrollChat();
+        }
+
+        function speak(text, btn) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text.replace(/\*\*/g, ''));
+            msg.lang = 'pt-BR';
+            window.speechSynthesis.speak(msg);
+        }
+
+        function openPremiumModal() {
+            const list = document.getElementById('versionList');
+            list.innerHTML = '';
+            VERSIONS.forEach((v, idx) => {
+                const opt = document.createElement('div');
+                opt.className = `version-option ${currentVersionIndex === idx ? 'active' : ''}`;
+                opt.onclick = () => { 
+                    currentVersionIndex = idx; 
+                    updateVersionUI(); 
+                    closePremiumModal();
+                    renderMsg(`Versão alterada para **Orynéx 2.2 ${v.name}**.`, 'bot');
+                };
+                opt.innerHTML = `<div class="version-icon" style="background: ${v.color}"><i class="bi bi-${v.icon}"></i></div><div style="flex:1"><div style="font-weight: bold;">Orynéx ${v.name}</div><div style="font-size: 0.8rem; color: var(--text-sub)">${quotaData.counts[idx]}/${v.limit} mensagens</div></div>`;
+                list.appendChild(opt);
+            });
+            document.getElementById('modalPremium').style.display = 'grid';
+        }
+
+        function closePremiumModal() { document.getElementById('modalPremium').style.display = 'none'; }
+        
+        function saveToDB(u, b, img) { 
+            if(!db[activeId]) db[activeId] = []; 
+            db[activeId].push({text: u, role: 'user', userImg: img}, {text: b, role: 'bot'}); 
+            localStorage.setItem('ory_v3_db', JSON.stringify(db)); 
+            updateHistoryUI(); 
+        }
+
+        function updateHistoryUI() { 
+            const list = document.getElementById('historyList'); 
+            list.innerHTML = ''; 
+            Object.keys(db).sort().reverse().forEach(id => { 
+                const item = document.createElement('div'); 
+                item.className = `sidebar-item ${id === activeId ? 'active' : ''}`; 
+                item.innerHTML = `<i class="bi bi-chat-left-text"></i> <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${db[id][0].text || 'Imagem'}</span>`; 
+                item.onclick = () => loadChat(id); 
+                list.appendChild(item); 
+            }); 
+        }
+
+        function loadChat(id) { 
+            activeId = id; 
+            localStorage.setItem('ory_v3_active', id);
+            document.getElementById('msgList').innerHTML = ''; 
+            db[id].forEach(m => {
+                if(m.role === 'user') {
+                    renderMsg(m.text, 'user', false, m.userImg);
+                } else if(m.text.includes('[IMAGEM GERADA:')) {
+                    renderMsg(m.text, m.role, true);
+                } else {
+                    renderMsg(m.text, m.role);
+                }
+            }); 
+            closeSidebar(); 
+        }
+
+        function startNewChat() { activeId = 'chat_'+Date.now(); document.getElementById('msgList').innerHTML = ''; document.getElementById('welcome').style.display = 'block'; closeSidebar(); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
+        function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
+        function togglePlusMenu() { document.getElementById('attachMenu').classList.toggle('active'); }
+        function openInput(id) { document.getElementById(id).click(); togglePlusMenu(); }
+        function handleFile(input) { if (input.files[0]) { const reader = new FileReader(); reader.onload = (e) => { imgBase64 = e.target.result.split(',')[1]; document.getElementById('prevImg').src = e.target.result; document.getElementById('previewBar').style.display = 'block'; }; reader.readAsDataURL(input.files[0]); } }
+        function cancelPreview() { imgBase64 = null; document.getElementById('previewBar').style.display = 'none'; }
+        function scrollChat() { document.getElementById('chatView').scrollTop = document.getElementById('chatView').scrollHeight; }
+        
+        function initTheme() { 
+            const t = localStorage.getItem('ory_theme') || 'dark'; 
+            document.body.setAttribute('data-theme', t); 
+        }
+        
+        function toggleTheme() { 
+            const current = document.body.getAttribute('data-theme');
+            const target = current === 'dark' ? 'light' : 'dark'; 
+            document.body.setAttribute('data-theme', target); 
+            localStorage.setItem('ory_theme', target);
+        }
+
+        function openDelModal() { document.getElementById('modalDel').style.display = 'grid'; }
+        function closeDelModal() { document.getElementById('modalDel').style.display = 'none'; }
+        
+        function clearAllHistory() { 
+            const currentTheme = localStorage.getItem('ory_theme');
+            localStorage.clear(); 
+            if(currentTheme) localStorage.setItem('ory_theme', currentTheme);
+            location.reload(); 
+        }
+    </script>
+</body>
+</html>

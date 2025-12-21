@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="description" content="Orynéx é uma plataforma de inteligência artificial desenvolvida para ajudar usuários com buscas, interações, automação e soluções digitais.">
+  <meta name="google-site-verification" content="jJMLk5nICaDl7aBfbQEkY15qT4ZKhmEhyxcK-PNWY-c" />
+  <title>Orynéx AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  
+  <style>
+    :root {
+      --bg-color: #ffffff; /* Fundo Branco solicitado */
+      --accent-primary: #4285f4;
+      --accent-secondary: #d96570;
+      --text-main: #1f1f1f;
+      --text-sub: #757575;
+      --progress-bg: #f0f0f0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+
+    body {
+      background: var(--bg-color);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      color: var(--text-main);
+    }
+
+    .loader-container {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    /* Ícone flutuante com gradiente */
+    .brand-icon {
+      font-size: 3.5rem;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 10px 20px rgba(66, 133, 244, 0.15));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-top: 10px;
+      color: var(--text-main);
+    }
+
+    .status-text {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+
+    /* Barra de Progresso Minimalista */
+    .progress-wrapper {
+      width: 220px;
+      height: 4px;
+      background: var(--progress-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 15px;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 10px;
+      animation: progressFill 7.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    /* Animações */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    @keyframes progressFill {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Brilho suave de fundo para não ficar "chapado" */
+    .glow {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(66, 133, 244, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow"></div>
+
+  <div class="loader-container">
+    <i class="bi bi-slack brand-icon"></i>
+    <div>
+      <h1>Oʀʏɴᴇ́x AI</h1>
+      <p class="status-text" id="status">Iniciando sistema...</p>
+    </div>
+    
+    <div class="progress-wrapper">
+      <div class="progress-bar"></div>
+    </div>
+  </div>
+
+  <script>
+    const statusMessages = [
+      "Conectando ao núcleo...",
+      "Carregando modelos...",
+      "Preparando interface...",
+      "Sincronizando dados...",
+      "Tudo pronto!"
+    ];
+
+    let msgIndex = 0;
+    const statusEl = document.getElementById('status');
+
+    const interval = setInterval(() => {
+      if (msgIndex < statusMessages.length) {
+        statusEl.innerText = statusMessages[msgIndex];
+        msgIndex++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 1500);
+
+    // Redirecionamento em 8 segundos
+    setTimeout(() => {
+      document.body.style.opacity = '0';
+      document.body.style.transition = '0.8s ease-in-out';
+      setTimeout(() => {
+        window.location.href = "orynex.html";
+      }, 800);
+    }, 10000);
+  </script>
+</body>
+</html>
